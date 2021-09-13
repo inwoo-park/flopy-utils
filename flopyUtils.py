@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import traceback
 import geopandas
-import shapely
 import netCDF4
 
 # for changing ESPG system of modflow.
@@ -28,6 +27,7 @@ if found:
 import pyproj
 
 # geopandas
+import shapely
 from shapely.geometry import Point, LineString
 
 import inspect
