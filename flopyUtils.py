@@ -4,7 +4,7 @@ Explain
  "flopyUtils.py" supports "Flopy" as user defined functions.
 
 '''
-
+import importlib
 import flopy
 import pandas
 import numpy
@@ -17,8 +17,14 @@ import shapely
 import netCDF4
 
 # for changing ESPG system of modflow.
-import gdal
-from gdal import ogr, osr
+# try to find gdal module
+found = False
+loader = importlib.find_loader('gdal')
+found = loader is not None
+if found:
+    import gdal
+    from gdal import ogr, osr
+
 import pyproj
 
 # geopandas
