@@ -4,11 +4,14 @@ Explain
  "flopyUtils.py" supports "Flopy" as user defined functions.
 
 '''
+# for system command
+import glob, os, sys, shutil, importlib
 
 import flopy
 import pandas
 import numpy
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import traceback
@@ -16,21 +19,25 @@ import geopandas
 import shapely
 import netCDF4
 
-# for system command
-import glob, os, sys, shutil
-
 # for changing ESPG system of modflow.
-import osgeo 
-from osgeo import ogr, osr
-import pyproj
+import pyproj # currently use this function
+try:          # try to import osgeo for futhers
+    import osgeo
+    from osgeo import ogr, osr
+except:
+    raise Warning("cannot load osgeo modules.")
 
 # download module
 import wget # for downloading usgs package.
 
 # geopandas
 from shapely.geometry import Point, LineString
-
 import inspect
+
+# use TKAgg at linux machine # {{{
+if sys.platform == 'linux':
+    matplotlib.use('TKAgg')
+# }}}
 
 # utils
 def mfPrint(string,debug=False):# {{{
@@ -369,7 +376,6 @@ def updateEPSG(mf,epsg_src,epsg_tgt,debug=0): # {{{
             yul, xul = pyproj.transform(inProj,outProj,my[0],mx[0])
         else:
             print('current pyproj {} is not supported'.format(pyproj.__version__))
-            
 
     # update xul, yul
     if flopy.__version__ == '3.3.4':
