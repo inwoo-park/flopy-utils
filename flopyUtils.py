@@ -450,7 +450,7 @@ def flopyGetXY(mf,center=1,debug=False): # {{{
 
     # get coorner coordinates
     print_('   %s: get global coordinate'%(f_name),debug=debug)
-    if flopy.__version__ == '3.3.2':
+    if flopy.__version__ <= '3.3.3':
         print_('   {}: flopy version = {}'.format(f_name,flopy.__version__),debug=debug)
         xul = mf.dis._sr.xul # upper left corner grid
         yul = mf.dis._sr.yul # upper left corder grid
@@ -927,7 +927,7 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
     ibound = mf.bas6.ibound.array
 
     # processing find nan value in data.
-    for i in range(data.shape[0]):
+    for i in range(np.shape(data.shape)[0]):
         data[i][data[i] <= -999.0+0.01] = numpy.nan
         data[i][ibound[i]==0] = np.nan
 
