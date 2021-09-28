@@ -927,7 +927,7 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
     ibound = mf.bas6.ibound.array
 
     # processing find nan value in data.
-    for i in range(np.shape(data.shape)[0]):
+    for i in range(np.shape(data)[0]):
         data[i][data[i] <= -999.0+0.01] = numpy.nan
         data[i][ibound[i]==0] = np.nan
 
