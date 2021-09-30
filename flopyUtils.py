@@ -1427,6 +1427,17 @@ def mf96ReadRchFloat(fid,ncol,nrow,fileunit,debug=False): # {{{
 
 # visual modflow package: mf96
 def mf96LoadNam(filename=[],debug=False):# {{{
+    '''
+    Explain
+     load *.nam (name file) of mf96.
+
+    Usage 
+     packages = mf96LoadNam('./WJcont-2014/FDecayH.mfi') 
+
+    Variables
+     output
+     packages - contains information of each packages, such as bas, bcf, drn, wel, rch, riv.
+    '''
     # check filename
     if not filename:
         raise Exception('ERROR: mf96LoadNam requires input file.')
@@ -1446,6 +1457,10 @@ def mf96LoadNam(filename=[],debug=False):# {{{
     return packages
 # }}}
 def mf96LoadBas(filename=[],fileunit=[],debug=False): # {{{
+    '''
+    Explain
+     load *.bas (Basic package file) of mf96
+    '''
     if not filename:
         raise Exception('ERROR: mf96LoadBas requires input filename.')
     mfPrint(filename,debug=debug)
@@ -1536,6 +1551,10 @@ def mf96LoadBas(filename=[],fileunit=[],debug=False): # {{{
     return package_bas
 # }}}
 def mf96LoadBcf(filename=[],fileunit=[],debug=False,nper=[],nlay=[],ncol=[],nrow=[]):# {{{
+    '''
+    Explain
+     load *.bcf (?? package file) of mf96
+    '''
 
     mfPrint('Load BCF package',debug=debug)
 
@@ -1787,6 +1806,10 @@ def mf96LoadBcf(filename=[],fileunit=[],debug=False,nper=[],nlay=[],ncol=[],nrow
     return package_bcf
 # }}}
 def mf96LoadWel(filename=[],fileunit=[],debug=False,nper=[],nlay=[],ncol=[],nrow=[]):# {{{
+    '''
+    Explain
+     load *.wel (Well package file) of mf96
+    '''
     
     mfPrint('Load WEL Package')
 
@@ -1937,14 +1960,59 @@ def vmfLoadAd3(filename,debug=True):# {{{
     raise Exception('this function is not supported yet.')
 # }}}
 
-def mf96ToFlopy(mf,bas=[],bcf=[],wel=[],drn=[],riv=[],rch=[]): # {{{
+def mf96ToFlopy(mf,filename=[],bas=[],bcf=[],wel=[],drn=[],riv=[],rch=[],debug=False): # {{{
     '''
     Explain
      Save modflow96 to Flopy format.
 
     Usage
-     mf96ToFlopy(mf,bas=bas,bcf=[],wel=[],drn=[],riv=[],rch=[]):
+    # use filename
+    >> mf = flopy.modflow.Modflow('mf96ToFlopy',exe_name='mf2005',model_ws='mf96ToFlopy')
+    >> mf = mf96ToFlopy(mf,filename='./WJcont-2014/FDecayH.mfi')
+
+    # load each package and impose each packge.
+    >> mf = flopy.modflow.Modflow('mf96ToFlopy',exe_name='mf2005',model_ws='mf96ToFlopy')
+    >> packages = mf96LoadName(filename)
+    >> mf = mf96ToFlopy(mf,bas=packages['bas'],bcf=[],wel=[],drn=[],riv=[],rch=[]):
+
     '''
+    # check input variables
+    if not isinstance(mf,flopy.modflow.Modflow):
+        raise Exception('class of mf(=%s) should be flopy.modflow.Modflow'%(type(mf)))
+
+    # load name file
+    if not filename:
+        # load package information.
+        packages = mf96LoadNam(filename,debug=debug)
+
+        # load bas package
+        bas = mf96LoadBas(filename=dirname+packages['bas'][1],
+                fileunit=packages['bas'][0],debug=debug)
+        
+        # load bcf package.
+        bcf = mf96LoadBcf(filename=dirname+packages['bcf'][1],
+                fileunit=packages['bcf'][0],debug=debug,
+                nper=bas['nper'],ncol=bas['ncol'],nrow=bas['nrow'],nlay=bas['nlay'])
+
+        # load drn package
+        drn = mf96LoadDrn(filename=dirname+packages['drn'][1],
+                fileunit=packages['drn'][0],debug=debug,
+                nper=bas['nper'],ncol=bas['ncol'],nrow=bas['nrow'],nlay=bas['nlay'])
+
+        # load wel package
+        wel = mf96LoadWel(filename=dirname+packages['wel'][1],
+                fileunit=packages['wel'][0],debug=debug,
+                nper=bas['nper'],ncol=bas['ncol'],nrow=bas['nrow'],nlay=bas['nlay'])
+
+        # load rch package
+        rch = mf96LoadRch(filename=dirname+packages['rch'][1],
+                fileunit=packages['rch'][0],debug=debug,
+                nper=bas['nper'],ncol=bas['ncol'],nrow=bas['nrow'],nlay=bas['nlay'])
+
+        # load riv package
+        riv = mf96LoadRiv(filename=dirname+packages['riv'][1],
+                fileunit=packages['riv'][0],debug=debug,
+                nper=bas['nper'],ncol=bas['ncol'],nrow=bas['nrow'],nlay=bas['nlay'])
 
     flopy.modflow.ModflowDis(mf,nlay=bas['nlay'],nrow=bas['nrow'],ncol=bas['ncol'],
             itmuni=bas['itmuni'],
@@ -1990,6 +2058,8 @@ def mf96ToFlopy(mf,bas=[],bcf=[],wel=[],drn=[],riv=[],rch=[]): # {{{
                     "save head","save drawdown","save budget","print head"
                     ]
     flopy.modflow.ModflowOc(mf,stress_period_data=stress_period_data,compact=True)
+
+    return mf
 # }}}
 
 # generate mesh
