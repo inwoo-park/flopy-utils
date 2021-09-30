@@ -4,15 +4,26 @@ Explain
  "flopyUtils.py" supports "Flopy" as user defined functions.
 
 '''
+<<<<<<< HEAD
 import importlib
+=======
+# for system command
+import glob, os, sys, shutil, importlib
+
+>>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
 import flopy
 import pandas
 import numpy
 import numpy as np
+<<<<<<< HEAD
+=======
+import matplotlib
+>>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import traceback
 import geopandas
+<<<<<<< HEAD
 import netCDF4
 
 # for changing ESPG system of modflow.
@@ -32,6 +43,31 @@ from shapely.geometry import Point, LineString
 
 import inspect
 
+=======
+import shapely
+import netCDF4
+
+# for changing ESPG system of modflow.
+import pyproj # currently use this function
+try:          # try to import osgeo for futhers
+    import osgeo
+    from osgeo import ogr, osr
+except:
+    raise Warning("cannot load osgeo modules.")
+
+# download module
+import wget # for downloading usgs package.
+
+# geopandas
+from shapely.geometry import Point, LineString
+import inspect
+
+# use TKAgg at linux machine # {{{
+if sys.platform == 'linux':
+    matplotlib.use('TKAgg')
+# }}}
+
+>>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
 # utils
 def mfPrint(string,debug=False):# {{{
     '''
@@ -369,7 +405,10 @@ def updateEPSG(mf,epsg_src,epsg_tgt,debug=0): # {{{
             yul, xul = pyproj.transform(inProj,outProj,my[0],mx[0])
         else:
             print('current pyproj {} is not supported'.format(pyproj.__version__))
+<<<<<<< HEAD
             
+=======
+>>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
 
     # update xul, yul
     if flopy.__version__ == '3.3.4':
@@ -444,7 +483,11 @@ def flopyGetXY(mf,center=1,debug=False): # {{{
 
     # get coorner coordinates
     print_('   %s: get global coordinate'%(f_name),debug=debug)
+<<<<<<< HEAD
     if flopy.__version__ == '3.3.2':
+=======
+    if flopy.__version__ <= '3.3.3':
+>>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
         print_('   {}: flopy version = {}'.format(f_name,flopy.__version__),debug=debug)
         xul = mf.dis._sr.xul # upper left corner grid
         yul = mf.dis._sr.yul # upper left corder grid
@@ -921,7 +964,11 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
     ibound = mf.bas6.ibound.array
 
     # processing find nan value in data.
+<<<<<<< HEAD
     for i in range(data.shape[0]):
+=======
+    for i in range(np.shape(data)[0]):
+>>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
         data[i][data[i] <= -999.0+0.01] = numpy.nan
         data[i][ibound[i]==0] = np.nan
 
@@ -1136,6 +1183,127 @@ def plotApplyOptions(ax, options): # {{{
         ax.set_ylim(options['ylim'])
 # }}}
 
+<<<<<<< HEAD
+=======
+# check modflow/mt3d path
+def check_mf_path(package='mf2005'): # {{{
+    if sys.platform == "linux":
+        if package == 'mf2005':
+            exe_name = 'mf2005'
+        elif package == 'mfnwt':
+            exe_name = 'mfnwt'
+
+        # check mf name
+        if shutil.which(exe_name) == None:
+            raise Exception('we cannot find specific location of %s'%(exe_name))
+
+    else: # WINDOW system.
+        if package == 'mf2005':
+            exe_name = 'mf2005.exe'
+        elif package == 'mfnwt':
+            exe_name = 'MODFLOW-NWT_64.exe'
+
+        # check mf name
+        if shutil.which(exe_name) == None:
+            print('we cannot find specific location of %s'%(exe_name))
+            # search file at "./bin" directory
+            if os.path.isfile('./bin/'+exe_name):
+                exe_name ='./bin/'+exe_name
+            else:
+                print('Download %s package from remote server and install package at current "./bin/".'%(exe_name_mf))
+                download_usgs_package(package=package)
+                exe_name = './bin/'+exe_name
+
+    return exe_name
+    # }}}
+def check_mt3d_path(package='mt3dusgs'): # {{{
+    if sys.platform == "linux":
+        if package == 'mt3dusgs':
+            exe_name = 'mt3dusgs'
+
+        # check mf name
+        if shutil.which(exe_name) == None:
+            raise Exception('we cannot find specific location of %s'%(exe_name))
+
+    else: # WINDOW system.
+        if package == 'mt3dusgs':
+            exe_name = 'mt3d-usgs_1.1.0_64.exe'
+
+        # check mf name
+        if shutil.which(exe_name) == None:
+            print('we cannot find specific location of %s'%(exe_name))
+
+            # search file at "./bin" directory
+            if os.path.isfile('./bin/'+exe_name):
+                exe_name='./bin/'+exe_name
+            else:
+                print('Download %s package from remote server and install package at current "./bin/".'%(exe_name_mf))
+                exe_name='./bin/'+exe_name
+                download_usgs_package(package=package)
+
+    return exe_name
+    # }}}
+def download_package(package='mf2005',install_prefix='./bin/'): # {{{
+    '''
+    Explain
+     download precompiled binary file from remote server
+
+    Usage 
+    # install usgs package at "./bin" directory
+     download_mf(package='mf2005')
+    '''
+    debug=1
+
+    # check install prefix
+    if not os.path.isdir(install_prefix):
+        os.mkdir(install_prefix)
+
+    if package == 'mf2005': # {{{
+        prefix = 'MF2005.1_12'
+
+        url = 'https://water.usgs.gov/water-resources/software/MODFLOW-2005/MF2005.1_12.zip'
+        print_('download package: %s from USGS homepage'%(package),debug=debug)
+        print_('url = %s'%(url),debug=debug)
+        wget.download(url)
+
+        # uznip files at "./bin" directory
+        shutil.unpack_archive(prefix + '.zip',install_prefix)
+
+        # move all binary files to './bin/'
+        filelists = glob.glob(install_prefix + '/' + prefix + '/bin/*.exe')
+        for filename in filelists:
+            print_('move %s to %s'%(filename,install_prefix),debug=debug)
+
+            # remove file
+            if os.path.isfile(install_prefix+'/'+filename.split('/')[-1]):
+                os.remove(install_prefix+'/'+filename.split('/')[-1])
+            shutil.move(filename,install_prefix)
+        # }}}
+    if package == 'mt3dusgs': # {{{
+        prefix = 'mt3dusgs1.1.0'
+
+        url='https://water.usgs.gov/water-resources/software/MT3D-USGS/mt3dusgs1.1.0.zip'
+        print_('download package: %s from USGS homepage'%(package),debug=debug)
+        print_('url = %s'%(url),debug=debug)
+        wget.download(url)
+
+        # uznip files at "./bin" directory
+        shutil.unpack_archive(prefix + '.zip',install_prefix)
+
+        # move all binary files to './bin/'
+        filelists = glob.glob(install_prefix + '/' + prefix + '/bin/*.exe')
+        for filename in filelists:
+            print_('move %s to %s'%(filename,install_prefix),debug=debug)
+
+            # remove file at ./bin/
+            if os.path.isfile(install_prefix+'/'+filename.split('/')[-1]):
+                os.remove(install_prefix+'/'+filename.split('/')[-1])
+            shutil.move(filename,install_prefix)
+        # }}}
+
+    # }}}
+
+>>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
 # Geometry options
 def PointsInPolygon(shpfile, x, y): # {{{
     '''
