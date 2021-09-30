@@ -4,47 +4,18 @@ Explain
  "flopyUtils.py" supports "Flopy" as user defined functions.
 
 '''
-<<<<<<< HEAD
-import importlib
-=======
 # for system command
 import glob, os, sys, shutil, importlib
 
->>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
 import flopy
 import pandas
 import numpy
 import numpy as np
-<<<<<<< HEAD
-=======
 import matplotlib
->>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import traceback
 import geopandas
-<<<<<<< HEAD
-import netCDF4
-
-# for changing ESPG system of modflow.
-# try to find gdal module
-found = False
-loader = importlib.find_loader('gdal')
-found = loader is not None
-if found:
-    import gdal
-    from gdal import ogr, osr
-
-import pyproj
-
-# geopandas
-import shapely
-from shapely.geometry import Point, LineString
-
-import inspect
-
-=======
-import shapely
 import netCDF4
 
 # for changing ESPG system of modflow.
@@ -67,7 +38,6 @@ if sys.platform == 'linux':
     matplotlib.use('TKAgg')
 # }}}
 
->>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
 # utils
 def mfPrint(string,debug=False):# {{{
     '''
