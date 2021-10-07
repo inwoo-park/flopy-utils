@@ -375,10 +375,6 @@ def updateEPSG(mf,epsg_src,epsg_tgt,debug=0): # {{{
             yul, xul = pyproj.transform(inProj,outProj,my[0],mx[0])
         else:
             print('current pyproj {} is not supported'.format(pyproj.__version__))
-<<<<<<< HEAD
-            
-=======
->>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
 
     # update xul, yul
     if flopy.__version__ == '3.3.4':
@@ -417,6 +413,31 @@ def ChangeOutputName(mf,prefix=[]): # {{{
 
     return mf
 # }}}
+def updateInitialHead(mf): # {{{
+    '''
+    Explain
+     update initial head distribution from simulation results.
+
+    Usage
+     mf = flopy.modflow.Modflow.load('./test001.nam',model_ws='./')
+     updateInitialHead(mf)
+    '''
+
+    # set filename
+    filename = mf.model_ws + '/' + mf.name + '.hds'
+
+    # check existence of file
+    if not os.path.isfile(filename):
+        raise Exception('we cannot find file %s.'%(filename))
+
+    # load head obj
+    hobj = flopy.utils.binaryfile.HeadFile(filename)
+    times = hobj.get_times()
+    head  = hobj.get_data(totime=times[-1])
+
+    # update head data
+    updateBas(mf,strt=head)
+# }}}
 
 # Grid and index functions.
 def flopyGetXY(mf,center=1,debug=False): # {{{
@@ -453,11 +474,7 @@ def flopyGetXY(mf,center=1,debug=False): # {{{
 
     # get coorner coordinates
     print_('   %s: get global coordinate'%(f_name),debug=debug)
-<<<<<<< HEAD
-    if flopy.__version__ == '3.3.2':
-=======
     if flopy.__version__ <= '3.3.3':
->>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
         print_('   {}: flopy version = {}'.format(f_name,flopy.__version__),debug=debug)
         xul = mf.dis._sr.xul # upper left corner grid
         yul = mf.dis._sr.yul # upper left corder grid
@@ -697,7 +714,10 @@ def flopyIndexToGrid(mf,cols,rows,lays,values,debug=False):# {{{
 def flopyXyToIndex(mf,x,y,debug=False):# {{{
     '''
     Explain
-     
+     Get specific column and row array of x,y coordinates.
+
+    Usage
+     cols, rows = flopyXyToIndex(mf,welx,wely)
     '''
     cols, rows, lays = flopyXyzToIndex(mf,x,y,[])
 
@@ -934,11 +954,7 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
     ibound = mf.bas6.ibound.array
 
     # processing find nan value in data.
-<<<<<<< HEAD
-    for i in range(data.shape[0]):
-=======
     for i in range(np.shape(data)[0]):
->>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
         data[i][data[i] <= -999.0+0.01] = numpy.nan
         data[i][ibound[i]==0] = np.nan
 
@@ -1153,8 +1169,6 @@ def plotApplyOptions(ax, options): # {{{
         ax.set_ylim(options['ylim'])
 # }}}
 
-<<<<<<< HEAD
-=======
 # check modflow/mt3d path
 def check_mf_path(package='mf2005'): # {{{
     if sys.platform == "linux":
@@ -1273,7 +1287,6 @@ def download_package(package='mf2005',install_prefix='./bin/'): # {{{
 
     # }}}
 
->>>>>>> 2ec2ee38a9a336703a55c44912b2deba293eea15
 # Geometry options
 def PointsInPolygon(shpfile, x, y): # {{{
     '''
