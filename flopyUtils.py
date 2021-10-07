@@ -433,7 +433,7 @@ def updateInitialHead(mf): # {{{
     # load head obj
     hobj = flopy.utils.binaryfile.HeadFile(filename)
     times = hobj.get_times()
-    head  = hobj.get_data(totime=times[-1])
+    head  = hobj.get_data(totim=times[-1])
 
     # update head data
     updateBas(mf,strt=head)
