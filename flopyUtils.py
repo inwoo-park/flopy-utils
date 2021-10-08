@@ -229,6 +229,7 @@ def updateDis(mf,nper=[],perlen=[],nstp=[],steady=[],
     Usage
      dis = updateDis(mf,nper=nper,perlen)
     '''
+    print_('update DIS package.',debug=debug)
     f_name = inspect.currentframe().f_code.co_name
 
     # time variables{{{
@@ -300,8 +301,7 @@ def updateDis(mf,nper=[],perlen=[],nstp=[],steady=[],
 
     return mf.dis
     # }}}
-# def updateBas {{{
-def updateBas(mf,ibound=[], strt=[]):
+def updateBas(mf,ibound=[], strt=[]):# {{{
 
     if not ibound:
         ibound = mf.bas6.ibound.array
@@ -312,6 +312,31 @@ def updateBas(mf,ibound=[], strt=[]):
 
     mf.bas = flopy.modflow.ModflowBas(mf, ibound = ibound, strt = strt)
     return
+# }}}
+def updateOc(mf,debug=0): # {{{
+    '''
+    Explain
+     update output control (package) of modflow.
+
+    Usage
+     updateOc(mf)
+    '''
+
+    print_('update OC package',debug=debug)
+
+    # get nper, nstp, perlen
+    nper = mf.dis.nper
+    nstp = mf.dis.nstp
+    perlen = mf.dis.perlen
+
+    # set OC package.
+    stress_period_data = {}
+    for kper in range(nper):
+        for kstp in range(nstp[kper]):
+            stress_period_data[(kper,kstp)] = [
+                    "save head","save drawdown","save budget","print head"
+                    ]
+    flopy.modflow.ModflowOc(mf,stress_period_data=stress_period_data,compact=True)
 # }}}
 def updateLpf(mf,hk=[],vka=[],ss=[],sy=[],hani=[],vkcb=[],wetdry=[]):# {{{
     if not np.any(hk):
