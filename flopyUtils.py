@@ -33,6 +33,9 @@ import wget # for downloading usgs package.
 from shapely.geometry import Point, LineString
 import inspect
 
+# interpolate give data for modflow data.
+import pykrige
+
 # use TKAgg at linux machine # {{{
 if sys.platform == 'linux':
     matplotlib.use('TKAgg')
@@ -654,6 +657,39 @@ def flopyGetXylength(mf,debug=False):# {{{
     ylen = np.sum(mf.dis.delc.array)
 
     return xlen, ylen
+    # }}}
+
+# interpolation
+# def flopyInterpFromPoints {{{
+def flopyInterpFromPoints(mf,x,y,data,variogram_model='spherical',
+        variogram_parameters=None):
+    '''
+    Usage
+     data_interp = flopyInterpFromPoints(mf,x,y,data)
+
+    Explain
+     Interpolate scattered of gridded data for modflow data. "pykrige" module is required for interpolation.
+
+    Inputs
+     x    - (npt,1) array ("npts" is number of points)
+     y    - (npt,1) array
+     data - (npt,1) array
+    '''
+
+    # get model grid
+    xg,yg = flopyGetXyGrid(mf,center=1,debug=0)
+    nx, ny = np.shape(xg)
+    xg = np.reshape(xg,(nx*ny,))
+    yg = np.reshape(yg,(nx*ny,))
+
+    # make ordinary kriging
+    OK = pykrige.ok.OrdinaryKriging(x,y,data,variogram_model=variogram_model,
+            verbose=False,enable_plotting=False)
+
+    # interpolateion
+    [data_interp, ss] = OK.execute('points',xg,yg)
+
+    return data_interp
     # }}}
 
 def flopyIndexToXy(mf,cols,rows,lays,debug=False):# {{{
