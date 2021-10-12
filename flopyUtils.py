@@ -30,6 +30,7 @@ except:
 import wget # for downloading usgs package.
 
 # geopandas
+import shapely
 from shapely.geometry import Point, LineString
 import inspect
 
@@ -689,6 +690,9 @@ def flopyInterpFromPoints(mf,x,y,data,variogram_model='spherical',
     # interpolateion
     [data_interp, ss] = OK.execute('points',xg,yg)
 
+    # reshape results
+    data_interp = np.reshape(data_interp,(nx,ny))
+
     return data_interp
     # }}}
 
@@ -1184,6 +1188,8 @@ def plotApplyOptions(ax, options): # {{{
     # label specials
     xlabel  = getfieldvalue(options,'xlabel',None)
     ylabel  = getfieldvalue(options,'ylabel',None)
+    xticks  = getfieldvalue(options,'xticks',[])
+    yticks  = getfieldvalue(options,'yticks',[])
     xlim = getfieldvalue(options,'xlim',None)
     ylim = getfieldvalue(options,'ylim',None)
 
@@ -1211,8 +1217,8 @@ def plotApplyOptions(ax, options): # {{{
         fig.set_tight_layout(True)
 
     # set x,y axes labels.
-    plt.xticks(fontsize=fontsize,axes=ax)
-    plt.yticks(fontsize=fontsize,axes=ax)
+    plt.xticks(xticks,fontsize=fontsize,axes=ax)
+    plt.yticks(yticks,fontsize=fontsize,axes=ax)
 
     if not xlabel:
         ax.set_xlabel('x (m)',fontsize=fontsize)
@@ -1229,6 +1235,21 @@ def plotApplyOptions(ax, options): # {{{
     if ylim:
         ax.set_ylim(options['ylim'])
 # }}}
+
+def on_xlims_change(axes): # {{{
+    a=axes.get_xlim()
+    print("updated xlims: ", axes.get_xlim())
+    return a
+    # }}}
+def on_ylims_change(axes): # {{{
+    a=axes.get_ylim()
+    print("updated ylims: ", axes.get_ylim())
+    return a
+    # }}}
+def on_fig_change(fig): # {{{
+    size = fig.get_size_inches()
+    print("updated figposition {}".format(size))
+    # }}}
 
 # check modflow/mt3d path
 def check_mf_path(package='mf2005'): # {{{
@@ -1355,19 +1376,43 @@ def PointsInPolygon(shpfile, x, y): # {{{
      find points location in polygon.
 
     Usage
-        >>> pos = PointsInPolygon(shpfile,x,y)
+     shapefile = '*.shp' # *.shp file format data.
+     pos = PointsInPolygon(shpfile,x,y)
+
+     # use points in polygon
+     xy_bc = np.array([[1,2],
+                [3,4],
+                [5,6]])
+     pos = PointsInPolygon(xy_bc,x,y)
     '''
 
     # load polygons from shpfile.
-    polygons = geopandas.read_file(shpfile)
+    if isinstance(shpfile,str):
+        polygons = geopandas.read_file(shpfile)
+    else: # array type
+        xy_bc = shpfile
+
+        # get size of array
+        nx, ny = np.shape(xy_bc)
+
+        # set DataFrame of pandas
+        df_poly = pandas.DataFrame(xy_bc,columns=['x','y'])
+        points  = [shapely.geometry.Point(xy) for xy in zip(df_poly.x, df_poly.y)]
+        polygons= shapely.geometry.Polygon([(p.x, p.y) for p in points])
 
     # find points in polygons.
     s = np.shape(x)
-    pos = np.zeros((s[0],s[1]))
-    for i in range(s[0]):
-        for j in range(s[1]):
-            p = shapely.geometry.Point(x[i,j],y[i,j])
-            pos[i,j] = polygons.contains(p)
+    if np.shape(s) == 2:
+        pos = np.zeros((s[0],s[1]))
+        for i in range(s[0]):
+            for j in range(s[1]):
+                p = shapely.geometry.Point(x[i,j],y[i,j])
+                pos[i,j] = polygons.contains(p)
+    else:
+        pos = np.zeros((s[0],1))
+        for i in range(s[0]):
+            p = shapely.geometry.Point(x[i],y[i])
+            pos[i] = polygons.contains(p)
 
     return pos
 # }}}
