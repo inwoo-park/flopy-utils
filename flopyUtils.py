@@ -362,11 +362,32 @@ def updateGhb(mf,stress_period_data=[],ipakcb=[]): # {{{
     if not np.any(stress_period_data):
         print('none')
     # }}}
-def updateBtn(mt,sconc=[],prsity=[],thkmin=[],munit=[],icbund=[],nprs=[]): # {{{
+def updateBtn(mt,sconc=[],prsity=[],thkmin=[],munit=[],icbund=[],nprs=[],debug=0): # {{{
+    # get model information.
+    nlay = mt.nlay
+    nrow = mt.nrow
+    ncol = mt.ncol
+
     if not np.any(sconc):
         sconc = mt.btn.sconc
+    else:
+        print_('check size of sconc (nlay, nrow, ncol)',debug=debug)
+        if np.shape(sconc) == (nrow, ncol):
+            print_('2d grid {}'.format(np.shape(sconc)),debug=debug)
+            # duplicate matrix for number fo layers
+            sconc = np.tile(sconc,(nlay,1,1))
+
     if not np.any(prsity):
         prsity = mt.btn.prsity
+    if not np.any(thkmin):
+        thkmin = mt.btn.thkmin
+    if not np.any(icbund):
+        icbund = mt.btn.icbund
+    if not np.any(munit):
+        munit = mt.btn.munit
+    if not np.any(nprs):
+        nprs = mt.btn.nprs
+    
 
     btn = flopy.mt3d.Mt3dBtn(mt,sconc=sconc,prsity=prsity,thkmin=thkmin,
             munit=munit,icbund=icbund,nprs=nprs)
