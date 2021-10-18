@@ -342,7 +342,12 @@ def updateOc(mf,debug=0): # {{{
                     ]
     flopy.modflow.ModflowOc(mf,stress_period_data=stress_period_data,compact=True)
 # }}}
-def updateLpf(mf,hk=[],vka=[],ss=[],sy=[],hani=[],vkcb=[],wetdry=[]):# {{{
+def updateLpf(mf,hk=[],vka=[],ss=[],sy=[],hani=[],vkcb=[],wetdry=[],storagecoefficient=False): #{{{
+    '''
+    Explain
+     Update modflow LPF package. usage of "updateLpf" is similar to flopy.modflow.ModflowLpf.
+
+    '''
     if not np.any(hk):
         hk = mf.lpf.hk.array
 
@@ -353,7 +358,7 @@ def updateLpf(mf,hk=[],vka=[],ss=[],sy=[],hani=[],vkcb=[],wetdry=[]):# {{{
     if not sy:
         sy = mf.lpf.sy.array
 
-    mf.lpf = flopy.modflow.ModflowLpf(mf,hk=hk,vka=vka,ss=ss,sy=sy)
+    mf.lpf = flopy.modflow.ModflowLpf(mf,hk=hk,vka=vka,ss=ss,sy=sy,storagecoefficient=storagecoefficient)
     return mf.lpf
 # }}}
 def updateGhb(mf,stress_period_data=[],ipakcb=[]): # {{{
@@ -684,7 +689,7 @@ def flopyGetXylength(mf,debug=False):# {{{
 # interpolation
 # def flopyInterpFromPoints {{{
 def flopyInterpFromPoints(mf,x,y,data,variogram_model='spherical',
-        variogram_parameters=None):
+        variogram_parameters=None,enable_plotting=False,method='universal'):
     '''
     Usage
      data_interp = flopyInterpFromPoints(mf,x,y,data)
@@ -704,12 +709,22 @@ def flopyInterpFromPoints(mf,x,y,data,variogram_model='spherical',
     xg = np.reshape(xg,(nx*ny,))
     yg = np.reshape(yg,(nx*ny,))
 
+    # check method
+    if not (method in ['ordinary','universal']):
+        raise Exception('Kriging method(%s) are ordinar and universal.'%(method))
+
     # make ordinary kriging
-    OK = pykrige.ok.OrdinaryKriging(x,y,data,variogram_model=variogram_model,
-            verbose=False,enable_plotting=False)
+    if method == 'ordinary':
+        kriging = pykrige.ok.OrdinaryKriging(x,y,data,variogram_model=variogram_model,
+                variogram_parameters=variogram_parameters,
+                verbose=False,enable_plotting=enable_plotting)
+    elif method == 'universal':
+        kriging = pykrige.uk.UniversalKriging(x,y,data,variogram_model=variogram_model,
+                variogram_parameters=variogram_parameters,
+                verbose=False,enable_plotting=enable_plotting)
 
     # interpolateion
-    [data_interp, ss] = OK.execute('points',xg,yg)
+    [data_interp, ss] = kriging.execute('points',xg,yg)
 
     # reshape results
     data_interp = np.reshape(data_interp,(nx,ny))
@@ -785,15 +800,20 @@ def flopyIndexToGrid(mf,cols,rows,lays,values,debug=False):# {{{
     '''
 
     # get domain
-    nrow = mf.dis.nrow.value
-    ncol = mf.dis.ncol.value
-    nlay = mf.dis.nlay.value
+    if flopy.__version__ >= '3.3.4':
+        nrow = mf.dis.nrow
+        ncol = mf.dis.ncol
+        nlay = mf.dis.nlay
+    else:
+        nrow = mf.dis.nrow.value
+        ncol = mf.dis.ncol.value
+        nlay = mf.dis.nlay.value
 
     # initialize output grid variables.
-    output = np.zeros((nlay,ncol,nrow),dtype=float)
+    output = np.zeros((nlay,nrow,ncol),dtype=float)
 
     for i in range(np.shape(values)[0]):
-        output[lays[i],rows[i],cols[i]] = values[i]
+        output[int(lays[i]),int(rows[i]),int(cols[i])] = values[i]
 
     return varargout(output)
 # }}}
