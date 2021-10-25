@@ -162,6 +162,12 @@ def updateGMS(mfinput,model_ws='./',modelname='modflowtest',exe_name='mf2005',
       mfGMS = flopy.modflow.Modflow.load('./GMSname.mfn')
       mf = updateGMS(mfGMS, model_ws = './Transient/',modelname='modflowtest')
     '''
+    # do not use this function any more.
+    raise Exception(
+            'do not use this function "updateGMS". Just load modflow as following.\n'
+            + '"mf = flopy.modflow.Modflow.load()".'
+            )
+
     # update solver version.
     if exe_name is not version:
         version = exe_name
@@ -825,7 +831,7 @@ def flopyXyToIndex(mf,x,y,debug=False):# {{{
     Usage
      cols, rows = flopyXyToIndex(mf,welx,wely)
     '''
-    cols, rows, lays = flopyXyzToIndex(mf,x,y,[])
+    cols, rows, lays = flopyXyzToIndex(mf,x,y,[],debug=debug)
 
     # outputs
     return varargout(cols, rows)
@@ -852,7 +858,7 @@ def flopyXyzToIndex(mf,x,y,z,debug=False):# {{{
         z = [z]
 
     # check length of each variables
-    mfPrint(type(x),debug=debug)
+    print_(type(x),debug=debug)
     if isinstance(x,pandas.core.series.Series):
         x =x.to_numpy()
     if isinstance(y,pandas.core.series.Series):
@@ -860,22 +866,36 @@ def flopyXyzToIndex(mf,x,y,z,debug=False):# {{{
     if isinstance(z,pandas.core.series.Series):
         z =z.to_numpy()
 
-    mfPrint('   len(x) = %d'%(len(x)),debug=debug)
-    mfPrint('   len(y) = %d'%(len(y)),debug=debug)
-    mfPrint('   len(z) = %d'%(len(z)),debug=debug)
+    print_('   len(x) = %d'%(len(x)),debug=debug)
+    print_('   len(y) = %d'%(len(y)),debug=debug)
+    print_('   len(z) = %d'%(len(z)),debug=debug)
     if len(x) != len(y) or len(x) != len(z) or len(y) != len(z):
         raise Exception('ERROR: Check length of x,y,z coordinates.')
 
     # get x,y,z grid information
     xg,yg,zg = flopyGetXyzGrid(mf,center=1)
 
-    mfPrint('zg shape = {}'.format(np.shape(zg)),debug=debug)
+    # get x,y non-centered grid information.
+    mx,my = flopyGetXY(mf,center=0)
+    xmin = np.amin(mx)
+    xmax = np.amax(mx)
+    ymin = np.amin(my)
+    ymax = np.amax(my)
 
-    mfPrint('   find poisition',debug=debug)
+    print_('zg shape = {}'.format(np.shape(zg)),debug=debug)
+
+    print_('   find poisition',debug=debug)
     cols = np.zeros((len(x),1),dtype=int) # z dir
     rows = np.zeros((len(y),1),dtype=int) # y dir
     lays = np.zeros((len(z),1),dtype=int) # z dir
     for i in range(len(x)):
+        # check x,y grid bounded with grid points
+        if xmin > x[i] or xmax < x[i]:
+            print_('warning: value of x(=%f) is out of model grid. %f~%f'%(x[i],xmin,xmax),debug=debug)
+        if ymin > y[i] or ymax < y[i]:
+            print_('warning: value of y(=%f) is out of model grid. %f~%f'%(y[i],ymin,ymax),debug=debug)
+
+        # get distance between point(x,y) and model grid.
         dist = np.square((xg-x[i])**2 + (yg-y[i])**2)
         cols[i] = dist.argmin(axis=1).min()
         rows[i] = dist.argmin(axis=0).min()
@@ -1000,6 +1020,10 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
     xlabel   = getfieldvalue(options,'xlabel','x (m)')
     ylabel   = getfieldvalue(options,'ylabel','y (m)')
     title    = getfieldvalue(options,'title',[])
+    
+    # colorbar options
+    colorbartitle = getfieldvalue(options,'colorbartitle',[])
+    colorbarfontsize = getfieldvalue(options,'colorbarfontsize',8)
 
     # initial geometry information from "modflow"
     nrow = mf.dis.nrow
@@ -1086,7 +1110,7 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
         caxis = getfieldvalue(options,'caxis',[np.nanmin(data), np.nanmax(data)])
         data_min = caxis[0]
         data_max = caxis[1]
-        mfPrint('   cmax=%f,  cmin=%f'%(data_max, data_min),debug=debug)
+        print_('   cmax=%f,  cmin=%f'%(data_max, data_min),debug=debug)
 
         for i in layers:
             mfPrint('   plot3d layer = %d'%(i))
@@ -1109,7 +1133,7 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
     cb = fig.colorbar(surf,ax = ax)
 
     if not isinstance(layers,int):
-        mfPrint('   set ticks for 3d plot.')
+        print_('   set ticks for 3d plot.',debug=debug)
         tick_min = data_min
         tick_max = data_max
 
@@ -1119,6 +1143,10 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
         for i, value in enumerate(ticklabels_num):
             ticklabels.append('%.2f'%(value))
         cb.set_ticklabels(ticklabels)
+
+        # set colorbar title
+        if colorbartitle:
+            cb.set_label(colorbartitle)
 
     # applying all ploting options.
     addfieldvalue(options,'colorbaraxis',cb)
@@ -1219,6 +1247,13 @@ def plotApplyOptions(ax, options): # {{{
      Apply all figure options to axes.
 
     Usage
+     plotApplyOptions(ax,{'title':'plot y=sin(x)'})
+
+    Inputs
+     xtick      - str - 'on' or 'off': show ticks or not
+                  array - show ticks with give values.
+     ytick      - str - 'on' or 'off': show ticks or not
+                  array - show ticks with give values.
     '''
     title    = getfieldvalue(options,'title',[])
     fontsize = getfieldvalue(options,'fontsize',8)
@@ -1229,8 +1264,8 @@ def plotApplyOptions(ax, options): # {{{
     # label specials
     xlabel  = getfieldvalue(options,'xlabel',None)
     ylabel  = getfieldvalue(options,'ylabel',None)
-    xticks  = getfieldvalue(options,'xticks',[])
-    yticks  = getfieldvalue(options,'yticks',[])
+    xticks  = getfieldvalue(options,'xticks','on')
+    yticks  = getfieldvalue(options,'yticks','on')
     xlim = getfieldvalue(options,'xlim',None)
     ylim = getfieldvalue(options,'ylim',None)
 
@@ -1257,9 +1292,16 @@ def plotApplyOptions(ax, options): # {{{
     if tightsubplot:
         fig.set_tight_layout(True)
 
-    # set x,y axes labels.
-    plt.xticks(xticks,fontsize=fontsize,axes=ax)
-    plt.yticks(yticks,fontsize=fontsize,axes=ax)
+    print_('set x,y axes labels.',debug=debug)
+    if xticks == 'off':
+        plt.xticks([],fontsize=fontsize,axes=ax)
+    elif not isinstance(xticks,str) and np.any(xticks):
+        plt.xticks(xticks,fontsize=fontsize,axes=ax)
+
+    if yticks == 'off':
+        plt.yticks([],fontsize=fontsize,axes=ax)
+    elif not isinstance(yticks,str) and np.any(yticks):
+        plt.yticks(yticks,fontsize=fontsize,axes=ax)
 
     if not xlabel:
         ax.set_xlabel('x (m)',fontsize=fontsize)
@@ -1276,6 +1318,15 @@ def plotApplyOptions(ax, options): # {{{
     if ylim:
         ax.set_ylim(options['ylim'])
 # }}}
+def plotIndexLabel(ax,index): # {{{
+    '''
+    Explain
+     plot index label at each axis.
+
+    Usage
+     plotIndexLabel(ax,'(a)')
+    '''
+    # }}}
 
 def on_xlims_change(axes): # {{{
     a=axes.get_xlim()
