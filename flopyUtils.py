@@ -163,10 +163,11 @@ def updateGMS(mfinput,model_ws='./',modelname='modflowtest',exe_name='mf2005',
       mf = updateGMS(mfGMS, model_ws = './Transient/',modelname='modflowtest')
     '''
     # do not use this function any more.
-    raise Exception(
-            'do not use this function "updateGMS". Just load modflow as following.\n'
-            + '"mf = flopy.modflow.Modflow.load()".'
-            )
+    if 0:
+        raise Exception(
+                'do not use this function "updateGMS". Just load modflow as following.\n'
+                + '"mf = flopy.modflow.Modflow.load()".'
+                )
 
     # update solver version.
     if exe_name is not version:
@@ -223,7 +224,11 @@ def updateGMS(mfinput,model_ws='./',modelname='modflowtest',exe_name='mf2005',
     flopy.modflow.ModflowOc(mf,stress_period_data=mfinput.oc.stress_period_data)
 
     # update rch package
-    mf.rch = mfinput.rch
+    flopy.modflow.ModflowRch(mf,nrchop=mfinput.rch.nrchop,
+            rech=mfinput.rch.rech,
+            irch=mfinput.rch.irch,
+            ipakcb=mfinput.rch.ipakcb,
+            )
 
     # output
     return mf
