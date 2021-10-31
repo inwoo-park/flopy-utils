@@ -6,6 +6,7 @@ Explain
 '''
 # for system command
 import glob, os, sys, shutil, importlib
+import platform
 
 import flopy
 import pandas
@@ -39,7 +40,8 @@ import pykrige
 
 # use TKAgg at linux machine # {{{
 if sys.platform == 'linux':
-    matplotlib.use('TKAgg')
+    if platform.node() != 'workstation':
+        matplotlib.use('TKAgg')
 # }}}
 
 # utils
@@ -379,6 +381,10 @@ def updateGhb(mf,stress_period_data=[],ipakcb=[]): # {{{
         print('none')
     # }}}
 def updateBtn(mt,sconc=[],prsity=[],thkmin=[],munit=[],icbund=[],nprs=[],debug=0): # {{{
+    '''
+    Explain
+     update Btn of mt3d without additional inputs.
+    '''
     # get model information.
     nlay = mt.nlay
     nrow = mt.nrow
@@ -404,7 +410,7 @@ def updateBtn(mt,sconc=[],prsity=[],thkmin=[],munit=[],icbund=[],nprs=[],debug=0
     if not np.any(nprs):
         nprs = mt.btn.nprs
     
-
+    # update Btn package.
     btn = flopy.mt3d.Mt3dBtn(mt,sconc=sconc,prsity=prsity,thkmin=thkmin,
             munit=munit,icbund=icbund,nprs=nprs)
     # }}}
