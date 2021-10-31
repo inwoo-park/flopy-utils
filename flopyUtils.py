@@ -435,7 +435,10 @@ def updateInitialHead(mf): # {{{
 def updateBtn(mt,sconc=[],prsity=[],thkmin=[],munit=[],icbund=[],nprs=[],debug=0): # {{{
     '''
     Explain
-     update Btn of mt3d without additional inputs.
+     update Btn of mt3d without additional inputs. Input variables are same as "flopy.mt3d.Mt3dBtn".
+
+    Usage
+     updateBtn(mt)
     '''
     # get model information.
     nlay = mt.nlay
@@ -446,6 +449,8 @@ def updateBtn(mt,sconc=[],prsity=[],thkmin=[],munit=[],icbund=[],nprs=[],debug=0
         # check size of sconc.
         if np.shape(mt.btn.sconc) == (1,):
             sconc = mt.btn.sconc[0].array
+        else:
+            raise Exception('size of sconc = {} is not supproted yet.'%(np.shape(mt.btn.sconc)))
     else:
         print_('check size of sconc (nlay, nrow, ncol)',debug=debug)
         if np.shape(sconc) == (nrow, ncol):
