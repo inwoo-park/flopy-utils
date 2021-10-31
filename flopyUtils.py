@@ -380,86 +380,6 @@ def updateGhb(mf,stress_period_data=[],ipakcb=[]): # {{{
     if not np.any(stress_period_data):
         print('none')
     # }}}
-def updateBtn(mt,sconc=[],prsity=[],thkmin=[],munit=[],icbund=[],nprs=[],debug=0): # {{{
-    '''
-    Explain
-     update Btn of mt3d without additional inputs.
-    '''
-    # get model information.
-    nlay = mt.nlay
-    nrow = mt.nrow
-    ncol = mt.ncol
-
-    if not np.any(sconc):
-        sconc = mt.btn.sconc
-    else:
-        print_('check size of sconc (nlay, nrow, ncol)',debug=debug)
-        if np.shape(sconc) == (nrow, ncol):
-            print_('2d grid {}'.format(np.shape(sconc)),debug=debug)
-            # duplicate matrix for number fo layers
-            sconc = np.tile(sconc,(nlay,1,1))
-
-    if not np.any(prsity):
-        prsity = mt.btn.prsity
-    if not np.any(thkmin):
-        thkmin = mt.btn.thkmin
-    if not np.any(icbund):
-        icbund = mt.btn.icbund
-    if not np.any(munit):
-        munit = mt.btn.munit
-    if not np.any(nprs):
-        nprs = mt.btn.nprs
-    
-    # update Btn package.
-    btn = flopy.mt3d.Mt3dBtn(mt,sconc=sconc,prsity=prsity,thkmin=thkmin,
-            munit=munit,icbund=icbund,nprs=nprs)
-    # }}}
-def updateEPSG(mf,epsg_src,epsg_tgt,debug=0): # {{{
-    '''
-    Explain
-     change EPSG system of modflow.
-
-    Usage
-     epsg_src = '5174'
-     epsg_tgt = '5186'
-     mf = updateEPSG(mf,epsg_src,epsg_tgt)
-    '''
-    f_name = inspect.currentframe().f_code.co_name
-
-    # get x,y coordinates of modflow.
-    mx,my = flopyGetXY(mf,center=0,debug=debug)
-
-    if 0: #old version
-        # change EPSG coordinates of model.
-        src = gdal.osr.SpatialReference()
-        tgt = gdal.osr.SpatialReference()
-        src.ImportFromEPSG(epsg_src)
-        tgt.ImportFromEPSG(epsg_tgt)
-
-        transform = gdal.osr.CoordinateTransformation(src,tgt)
-        print_('   %s: x0,y0 = (%f,%f)'%(f_name,mx[0],my[0]),debug=debug)
-        yul, xul = transform.TransformPoint(my[0],mx[0])
-    else:
-        # check pyproj version
-        if pyproj.__version__ >= '3.0.0':
-            inProj = pyproj.Proj(epsg_src)
-            outProj = pyproj.Proj(epsg_tgt)
-            yul, xul = pyproj.transform(inProj,outProj,my[0],mx[0])
-        else:
-            print('current pyproj {} is not supported'.format(pyproj.__version__))
-
-    # update xul, yul
-    if flopy.__version__ == '3.3.4':
-        print_('   {}: update EPSG = {},{}'.format(f_name,xul,yul),debug=debug)
-        xlen, ylen = flopyGetXylength(mf)
-        mf.modelgrid._xoff = xul
-        mf.modelgrid._yoff = yul-ylen
-    else:
-        updateDis(mf,xul=xul, yul=yul)
-
-    # output
-    return varargout(mf)
-# }}}
 def ChangeOutputName(mf,prefix=[]): # {{{
     '''
     Explain:
@@ -509,6 +429,90 @@ def updateInitialHead(mf): # {{{
 
     # update head data
     updateBas(mf,strt=head)
+# }}}
+
+# mt3d specials.
+def updateBtn(mt,sconc=[],prsity=[],thkmin=[],munit=[],icbund=[],nprs=[],debug=0): # {{{
+    '''
+    Explain
+     update Btn of mt3d without additional inputs.
+    '''
+    # get model information.
+    nlay = mt.nlay
+    nrow = mt.nrow
+    ncol = mt.ncol
+
+    if not np.any(sconc):
+        # check size of sconc.
+        if np.shape(mt.btn.sconc) == (1,):
+            sconc = mt.btn.sconc[0].array
+    else:
+        print_('check size of sconc (nlay, nrow, ncol)',debug=debug)
+        if np.shape(sconc) == (nrow, ncol):
+            print_('2d grid {}'.format(np.shape(sconc)),debug=debug)
+            # duplicate matrix for number fo layers
+            sconc = np.tile(sconc,(nlay,1,1))
+
+    if not np.any(prsity):
+        prsity = mt.btn.prsity
+    if not np.any(thkmin):
+        thkmin = mt.btn.thkmin
+    if not np.any(icbund):
+        icbund = mt.btn.icbund
+    if not np.any(munit):
+        munit = mt.btn.munit
+    if not np.any(nprs):
+        nprs = mt.btn.nprs
+
+    # update Btn package.
+    btn = flopy.mt3d.Mt3dBtn(mt,sconc=sconc,prsity=prsity,thkmin=thkmin,
+            munit=munit,icbund=icbund,nprs=nprs)
+    # }}}
+def updateEPSG(mf,epsg_src,epsg_tgt,debug=0): # {{{
+    '''
+    Explain
+     change EPSG system of modflow.
+
+    Usage
+     epsg_src = '5174'
+     epsg_tgt = '5186'
+     mf = updateEPSG(mf,epsg_src,epsg_tgt)
+    '''
+    f_name = inspect.currentframe().f_code.co_name
+
+    # get x,y coordinates of modflow.
+    mx,my = flopyGetXY(mf,center=0,debug=debug)
+
+    if 0: #old version
+        # change EPSG coordinates of model.
+        src = gdal.osr.SpatialReference()
+        tgt = gdal.osr.SpatialReference()
+        src.ImportFromEPSG(epsg_src)
+        tgt.ImportFromEPSG(epsg_tgt)
+
+        transform = gdal.osr.CoordinateTransformation(src,tgt)
+        print_('   %s: x0,y0 = (%f,%f)'%(f_name,mx[0],my[0]),debug=debug)
+        yul, xul = transform.TransformPoint(my[0],mx[0])
+    else:
+        # check pyproj version
+        if pyproj.__version__ >= '3.0.0':
+            inProj = pyproj.Proj(epsg_src)
+            outProj = pyproj.Proj(epsg_tgt)
+            yul, xul = pyproj.transform(inProj,outProj,my[0],mx[0])
+        else:
+            print('current pyproj {} is not supported'.format(pyproj.__version__))
+
+    # update xul, yul
+    if flopy.__version__ == '3.3.4':
+        print_('   {}: update EPSG = {},{}'.format(f_name,xul,yul),debug=debug)
+        xlen, ylen = flopyGetXylength(mf)
+        mf.modelgrid._xoff = xul
+        mf.modelgrid._yoff = yul-ylen
+    else:
+        updateDis(mf,xul=xul, yul=yul)
+
+    # output
+    return varargout(mf)
 # }}}
 
 # Grid and index functions.
