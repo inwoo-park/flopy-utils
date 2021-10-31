@@ -24,7 +24,7 @@ try:          # try to import osgeo for futhers
     import osgeo
     from osgeo import ogr, osr
 except:
-    raise Warning("cannot load osgeo modules.")
+    print("cannot load osgeo modules.")
 
 # download module
 import wget # for downloading usgs package.
