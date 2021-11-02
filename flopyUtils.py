@@ -250,11 +250,11 @@ def updateDis(mf,nper=[],perlen=[],nstp=[],steady=[],
     # time variables{{{
     if not nper:
         nper = mf.dis.nper
-    if not perlen:
+    if not np.any(perlen):
         perlen = mf.dis.perlen
-    if not nstp:
+    if not np.any(nstp):
         nstp = mf.dis.nstp
-    if not steady:
+    if not np.any(steady):
         steady = mf.dis.steady
     # }}}
 
@@ -503,6 +503,30 @@ def updateInitialHead(mf): # {{{
 
     # update head data
     updateBas(mf,strt=head)
+# }}}
+
+# import result files
+def HeadFile(mf): # {{{
+    '''
+    explain
+     import head objective with "mf" field.
+
+    usage
+     hobj = flopyUtils.HeadFile(mf)
+    '''
+
+    return flopy.utils.binaryfile.HeadFile(mf.model_ws+'/'+mf.name+'.hds')
+# }}}
+def UcnFile(mt): # {{{
+    '''
+    explain
+     import concentration objective with "mt" field.
+
+    usage
+     cobj = flopyUtils.UcnFile(mt)
+    '''
+
+    return flopy.utils.binaryfile.UcnFile(mt.model_ws+'/MT3D001.UCN')
 # }}}
 
 # Grid and index functions.
@@ -774,7 +798,7 @@ def flopyIndexToXy(mf,cols,rows,lays,debug=False):# {{{
     mfPrint('   cols = {0}'.format(cols),debug=debug)
     mfPrint('   rows = {0}'.format(rows),debug=debug)
 
-    if not np.shape(lays):
+    if not np.shape(lays) or not np.any(lays):
         mfPrint('   Force lays',debug=debug)
         mfPrint('   check shape of cols = {0}'.format(np.shape(cols)),debug=debug)
         lays = np.zeros(np.shape(cols))
