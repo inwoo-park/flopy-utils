@@ -38,15 +38,9 @@ import inspect
 # interpolate give data for modflow data.
 import pykrige
 
-# use TKAgg at linux machine # {{{
-if sys.platform == 'linux':
-    if platform.node() != 'workstation':
-        if not is_jupyter():
-            matplotlib.use('TKAgg')
-# }}}
 
 # utils for jupyter system.
-def is_jupyter():
+def is_jupyter(): # {{{
     '''
     Explain
      check python script operate under Jupyter Notebook
@@ -59,7 +53,14 @@ def is_jupyter():
             return False
     except:
         return False
+# }}}
 
+# use TKAgg at linux machine # {{{
+if sys.platform == 'linux':
+    if platform.node() != 'workstation':
+        if not is_jupyter():
+            matplotlib.use('TKAgg')
+# }}}
 
 # utils
 def mfPrint(string,debug=False):# {{{
@@ -1092,6 +1093,7 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
     nlay = mf.dis.nlay
 
     # determine 3d or 2d from layer
+    #print('layer = {}'.format(layers))
     if isinstance(layers,int):
         is3d = 0
     else:
@@ -1152,20 +1154,21 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
 
     # plot 3D plot
     if isinstance(layers,int): # plot 2D map
-        mfPrint('   plot2d layer = %d'%(layers),debug=debug)
+        print_('   plot2d layer = %d'%(layers),debug=debug)
         data_lay = data[layers]
 
         # find min max value in data for colorbar ticks.
         caxis = getfieldvalue(options,'caxis',[np.nanmin(data_lay), np.nanmax(data_lay)])
         data_min = caxis[0]
         data_max = caxis[1]
-        mfPrint('   cmax=%f,  cmin=%f'%(data_max, data_min),debug=debug)
+        print_('   cmax=%f,  cmin=%f'%(data_max, data_min),debug=debug)
         colors = plt.cm.jet((data_lay-data_min)/(data_max-data_min))
 
         # show 2d surface map.
         surf = ax.pcolor(x,y,data_lay,vmin=data_min,vmax=data_max,shading='auto',
                 cmap='jet',edgecolor='none')
     else:
+        print_('   plot 3d layer.',debug=debug)
         ax = fig.add_subplot(1,1,1,projection='3d')
         # find min max value in data for colorbar ticks.
         caxis = getfieldvalue(options,'caxis',[np.nanmin(data), np.nanmax(data)])
@@ -1215,9 +1218,20 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
     return varargout(ax,fig)
     # }}}
 def plotFlopyTransient(mf,obj,**kwargs): # {{{
+    '''
+    Explain
+     plot 2d transient simulation movie with flopy.
+
+    Usage
+     hobj = flopy.utils.binaryfile.HeadFile('mf.hds')
+     flopyUtils.plotFlopyTransient(mf,hobj)
+
+    Options
+     output     - set output filename (default: temp.gif)
+    '''
 
     # check data type
-    if (not isinstance(obj,flopy.utils.binaryfile.HeadFile)) and (not isinstance(obj,flopy.utils.binaryfile.UcnFile)): 
+    if (not isinstance(obj,flopy.utils.binaryfile.HeadFile)) and (not isinstance(obj,flopy.utils.binaryfile.UcnFile)):
         raise TypeError('Data(=%s) type should be flopy.utils.binaryfile.UncFile or flopy.utils.binaryfile.HeadFile.'%(type(obj)))
 
     # get options.
@@ -1225,9 +1239,9 @@ def plotFlopyTransient(mf,obj,**kwargs): # {{{
     debug    = getfieldvalue(options,'debug',False)
     layers   = getfieldvalue(options,'layer',0) # layer=0 for top layer
     ax       = getfieldvalue(options,'ax',[])
-    mfPrint('check axes',debug=debug)
-    mfPrint(ax,debug=debug)
-    mfPrint(type(ax),debug=debug)
+    print_('check axes',debug=debug)
+    print_('{}'.format(ax),debug=debug)
+    print_('{}'.format(type(ax)),debug=debug)
     fontsize = getfieldvalue(options,'fontsize',8)
     xlabel   = getfieldvalue(options,'xlabel','x (m)')
     ylabel   = getfieldvalue(options,'ylabel','y (m)')
@@ -1239,7 +1253,7 @@ def plotFlopyTransient(mf,obj,**kwargs): # {{{
     times = obj.get_times()
 
     # get grid
-    xg,yg = flopyGetXyGrid(mf,center=2)
+    xg,yg = flopyGetXyGrid(mf,center=1)
 
     # find cmax
     cmax = 0
@@ -1254,8 +1268,13 @@ def plotFlopyTransient(mf,obj,**kwargs): # {{{
             cmin = np.copy(cmin_temp)
 
     # plot animation
-    fig = plt.figure(figno); figno = figno +1
-    ax = fig.add_subplot()
+    if not ax:
+        fig = plt.figure(figno); figno = figno +1
+        ax = fig.add_subplot(1,1,1)
+    else:
+        # get current figure.
+        fig = plt.gcf()
+
     temp = obj.get_data(totim=times[0])
     cax = ax.pcolor(xg,yg,temp[0,:,:],cmap='RdBu_r',vmax=cmax,vmin=cmin)
     ax.set_aspect('equal')
