@@ -41,8 +41,25 @@ import pykrige
 # use TKAgg at linux machine # {{{
 if sys.platform == 'linux':
     if platform.node() != 'workstation':
-        matplotlib.use('TKAgg')
+        if not is_jupyter():
+            matplotlib.use('TKAgg')
 # }}}
+
+# utils for jupyter system.
+def is_jupyter():
+    '''
+    Explain
+     check python script operate under Jupyter Notebook
+    '''
+    try:
+        from IPython import get_ipython
+        if get_ipython().__class__.__name__ == 'ZMQInteractiveShell':
+            return True
+        else:
+            return False
+    except:
+        return False
+
 
 # utils
 def mfPrint(string,debug=False):# {{{
