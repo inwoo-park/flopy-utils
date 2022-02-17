@@ -601,7 +601,7 @@ def flopyGetXY(mf,center=1,debug=False): # {{{
         print_('   {}: flopy version = {}'.format(f_name,flopy.__version__),debug=debug)
         xul = mf.dis._sr.xul # upper left corner grid
         yul = mf.dis._sr.yul # upper left corder grid
-    elif flopy.__version__ == "3.3.4" or flopy.__version__ == "3.3.5":
+    elif flopy.__version__ >= "3.3.4":
         print_('   {}: flopy version = {}'.format(f_name,flopy.__version__),debug=debug)
         xul = mf.modelgrid.xoffset# upper left corner grid
         yul = mf.modelgrid.yoffset+np.sum(dy)# upper left corder grid
