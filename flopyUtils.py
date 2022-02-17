@@ -601,7 +601,7 @@ def flopyGetXY(mf,center=1,debug=False): # {{{
         print_('   {}: flopy version = {}'.format(f_name,flopy.__version__),debug=debug)
         xul = mf.dis._sr.xul # upper left corner grid
         yul = mf.dis._sr.yul # upper left corder grid
-    elif flopy.__version__ == "3.3.4":
+    elif flopy.__version__ == "3.3.4" or flopy.__version__ == "3.3.5":
         print_('   {}: flopy version = {}'.format(f_name,flopy.__version__),debug=debug)
         xul = mf.modelgrid.xoffset# upper left corner grid
         yul = mf.modelgrid.yoffset+np.sum(dy)# upper left corder grid
@@ -1092,6 +1092,13 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
     ncol = mf.dis.ncol
     nlay = mf.dis.nlay
 
+    # check input data set.
+    if data == 'mesh':
+        print('   plot mesh.')
+        xg, yg = flopyGetXyGrid(mf)
+        plt.scatter(xg,yg)
+        return
+
     # determine 3d or 2d from layer
     #print('layer = {}'.format(layers))
     if isinstance(layers,int):
@@ -1228,6 +1235,7 @@ def plotFlopyTransient(mf,obj,**kwargs): # {{{
 
     Options
      output     - set output filename (default: temp.gif)
+     frequency  - frequency of animation. (default = 10)
     '''
 
     # check data type
@@ -1248,12 +1256,13 @@ def plotFlopyTransient(mf,obj,**kwargs): # {{{
     title    = getfieldvalue(options,'title',[])
     figno    = getfieldvalue(options,'figno',1)
     outputname = getfieldvalue(options,'output','./temp.gif')
+    frequency  = getfieldvalue(options,'frequency',10)
 
     # get time
     times = obj.get_times()
 
     # get grid
-    xg,yg = flopyGetXyGrid(mf,center=1)
+    xg, yg = flopyGetXyGrid(mf,center=1)
 
     # find cmax
     cmax = 0
@@ -1280,12 +1289,12 @@ def plotFlopyTransient(mf,obj,**kwargs): # {{{
     ax.set_aspect('equal')
     fig.colorbar(cax)
     def update_ani(i,ax,cax,obj,times):
-        print('processing = %.2f'%(i/len(times)*100),end='\r')
+        print('processing = %.2f'%((i+1)/len(times)*100),end='\r')
         temp = obj.get_data(totim=times[i])
         cax.set_array(temp[0,:-1,:-1].flatten())
         ax.set_title('time %f days'%(times[i]))
 
-    ani = animation.FuncAnimation(fig, update_ani,frames=range(len(times)),fargs=(ax,cax,obj,times))
+    ani = animation.FuncAnimation(fig, update_ani,frames=range(0,len(times),frequency),fargs=(ax,cax,obj,times))
     ani.save(outputname, writer=animation.PillowWriter(fps=20))
 # }}}
 def plotFlopyTransientValue(mf,obj,**kwargs):# {{{
