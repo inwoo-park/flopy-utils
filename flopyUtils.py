@@ -1068,6 +1068,8 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
 
         # add figure on specific axes.
         plotFlopy3d(mf,head,layer=0,ax=ax1)
+
+    Options
     '''
     f_name = inspect.currentframe().f_code.co_name
 
@@ -1093,11 +1095,12 @@ def plotFlopy3d(mf,data,**kwargs): #{{{
     nlay = mf.dis.nlay
 
     # check input data set.
-    if data == 'mesh':
-        print('   plot mesh.')
-        xg, yg = flopyGetXyGrid(mf)
-        plt.scatter(xg,yg)
-        return
+    if isinstance(data,str):
+        if data == 'mesh':
+            print('   plot mesh.')
+            xg, yg = flopyGetXyGrid(mf)
+            plt.scatter(xg,yg)
+            return
 
     # determine 3d or 2d from layer
     #print('layer = {}'.format(layers))
