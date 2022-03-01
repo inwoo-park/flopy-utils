@@ -1586,12 +1586,13 @@ def PointsInPolygon(shpfile, x, y): # {{{
 
     # find points in polygons.
     s = np.shape(x)
-    if np.shape(s) == 2:
-        pos = np.zeros((s[0],s[1]))
+    if len(s) == 2:
+        pos = np.zeros(s)
         for i in range(s[0]):
             for j in range(s[1]):
                 p = shapely.geometry.Point(x[i,j],y[i,j])
-                pos[i,j] = polygons.contains(p)
+                tmp = polygons.contains(p)
+                pos[i,j] = tmp[0]
     else:
         pos = np.zeros((s[0],1))
         for i in range(s[0]):
