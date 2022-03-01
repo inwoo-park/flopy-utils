@@ -1573,6 +1573,8 @@ def PointsInPolygon(shpfile, x, y): # {{{
     # load polygons from shpfile.
     if isinstance(shpfile,str):
         polygons = geopandas.read_file(shpfile)
+        print('check size of polygons')
+        print('   shape of geometry = {}'.format(np.shape(polygons.geometry)))
     else: # array type
         xy_bc = shpfile
 
@@ -1585,14 +1587,17 @@ def PointsInPolygon(shpfile, x, y): # {{{
         polygons= shapely.geometry.Polygon([(p.x, p.y) for p in points])
 
     # find points in polygons.
-    s = np.shape(x)
+    s   = np.shape(x)
+    npg = len(polygons.geometry) # number of polygon geometry
     if len(s) == 2:
-        pos = np.zeros(s)
+        pos = np.zeros((s[0],s[1],npg))
         for i in range(s[0]):
             for j in range(s[1]):
                 p = shapely.geometry.Point(x[i,j],y[i,j])
-                tmp = polygons.contains(p)
-                pos[i,j] = tmp[0]
+                for k, pg in enumerate(polygons.geometry):
+                    tmp = pg.contains(p)
+                    pos[i,j,k] = tmp
+        pos = np.sum(pos,axis=2)
     else:
         pos = np.zeros((s[0],1))
         for i in range(s[0]):
