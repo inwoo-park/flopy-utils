@@ -418,8 +418,12 @@ def ChangeOutputName(mf,prefix=[]): # {{{
         prefix = mf.name
 
     for i, fname in enumerate(mf.output_fnames):
-        surfix = fname.split('.')[1]
+        surfix = fname.split('.')[-1]
         mf.output_fnames[i] = prefix + '.' + surfix
+
+    for i, fname in enumerate(mf.external_fnames):
+        surfix = fname.split('.')[-1]
+        mf.external_fnames[i] = prefix + '.' + surfix
 
     return mf
 # }}}
@@ -1554,7 +1558,7 @@ def download_package(package='mf2005',install_prefix='./bin/'): # {{{
     # }}}
 
 # Geometry options
-def PointsInPolygon(shpfile, x, y): # {{{
+def PointsInPolygon(shpfile, x, y, debug=0): # {{{
     '''
     Explain
      find points location in polygon.
@@ -1573,8 +1577,12 @@ def PointsInPolygon(shpfile, x, y): # {{{
     # load polygons from shpfile.
     if isinstance(shpfile,str):
         polygons = geopandas.read_file(shpfile)
-        print('check size of polygons')
-        print('   shape of geometry = {}'.format(np.shape(polygons.geometry)))
+        if debug:
+            print('check size of polygons')
+            print('   shape of geometry = {}'.format(np.shape(polygons.geometry)))
+    elif isinstance(shpfile,shapely.geometry.polygon.Polygon):
+        # reconstruct polygons with geopandas sytle.
+        polygons = geopandas.GeoSeries(shpfile)
     else: # array type
         xy_bc = shpfile
 
@@ -1584,11 +1592,15 @@ def PointsInPolygon(shpfile, x, y): # {{{
         # set DataFrame of pandas
         df_poly = pandas.DataFrame(xy_bc,columns=['x','y'])
         points  = [shapely.geometry.Point(xy) for xy in zip(df_poly.x, df_poly.y)]
-        polygons= shapely.geometry.Polygon([(p.x, p.y) for p in points])
+        poly = shapely.geometry.Polygon([(p.x, p.y) for p in points])
+        polygons = geopandas.GeoSeries(poly)
 
-    # find points in polygons.
+    if debug:
+        print('   find points in polygons.')
+
     s   = np.shape(x)
-    npg = len(polygons.geometry) # number of polygon geometry
+    npg = len(polygons.boundary) # number of polygon geometry
+
     if len(s) == 2:
         pos = np.zeros((s[0],s[1],npg))
         for i in range(s[0]):
