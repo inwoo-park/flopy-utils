@@ -824,6 +824,9 @@ def flopyIndexToXy(mf,cols,rows,lays,debug=False):# {{{
     # get x,y,z coordinates in mf
     xi,yi,zi = flopyGetXY(mf,center=1)
 
+    # get model information
+    nrow, ncol, nlay, _ = mf.get_nrow_ncol_nlay_nper()
+
     # force dtype as int
     if not isinstance(cols,list):
         cols = cols.astype(int)
@@ -844,6 +847,14 @@ def flopyIndexToXy(mf,cols,rows,lays,debug=False):# {{{
     if np.shape(lays) != np.shape(rows) or np.shape(lays) != np.shape(cols) or np.shape(rows) != np.shape(cols):
     #if len(lays) != len(rows) or len(lays) != len(cols) or len(rows) != len(cols):
         raise Exception('ERROR: check length of x,y,z.')
+    
+    # check lay, row, col boundary.
+    if np.amax(lays) > nlay-1:
+        raise Exception('Error max index of lays(=%d) is outside of boundary'%(np.amax(lays)))
+    if np.amax(rows) > nrow-1:
+        raise Exception('Error max index of rows(=%d) is outside of boundary'%(np.amax(rows)))
+    if np.amax(cols) > ncol-1:
+        raise Exception('Error max index of cols(=%d) is outside of boundary'%(np.amax(cols)))
 
     # initialize x,y points
     x = np.zeros(np.shape(cols))
