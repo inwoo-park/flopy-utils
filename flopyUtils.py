@@ -264,6 +264,7 @@ def updateDis(mf,nper=[],perlen=[],nstp=[],steady=[],
     Usage
      dis = updateDis(mf,nper=nper,perlen)
     '''
+    raise Exception('ERROR: updateDIS does not work anymore. Just update modflow flow parameteri with chaning variables in mf.dis')
     print_('update DIS package.',debug=debug)
     f_name = inspect.currentframe().f_code.co_name
 
@@ -337,6 +338,7 @@ def updateDis(mf,nper=[],perlen=[],nstp=[],steady=[],
     return mf.dis
     # }}}
 def updateBas(mf,ibound=[], strt=[]):# {{{
+    raise Exception('ERROR: updateBas does not work anymore. Just update modflow flow parameteri with chaning variables in mf.bas6')
 
     if not ibound:
         ibound = mf.bas6.ibound.array
@@ -356,6 +358,7 @@ def updateOc(mf,debug=0): # {{{
     Usage
      updateOc(mf)
     '''
+    raise Exception('ERROR: updateOc does not work anymore. Just update modflow flow parameteri with chaning variables in mf.oc')
 
     print_('update OC package',debug=debug)
 
@@ -379,6 +382,7 @@ def updateLpf(mf,hk=[],vka=[],ss=[],sy=[],hani=[],vkcb=[],wetdry=[],storagecoeff
      Update modflow LPF package. usage of "updateLpf" is similar to flopy.modflow.ModflowLpf.
 
     '''
+    raise Exception('ERROR: updateLpf does not work anymore. Just update modflow flow parameteri with chaning variables in mf.lpf')
     if not np.any(hk):
         hk = mf.lpf.hk.array
 
@@ -393,6 +397,7 @@ def updateLpf(mf,hk=[],vka=[],ss=[],sy=[],hani=[],vkcb=[],wetdry=[],storagecoeff
     return mf.lpf
 # }}}
 def updateGhb(mf,stress_period_data=[],ipakcb=[]): # {{{
+    raise Exception('ERROR: updateGhb does not work anymore. Just update modflow flow parameteri with chaning variables in mf.ghb')
     if not np.any(ipakcb):
         ipakcb = mf.ghb.ipakcb
     if not np.any(stress_period_data):
@@ -462,6 +467,7 @@ def updateBtn(mt,sconc=[],prsity=[],thkmin=[],munit=[],icbund=[],nprs=[],debug=0
     Usage
      updateBtn(mt)
     '''
+    raise Exception('ERROR: updateBtn does not work anymore. Just update modflow flow parameteri with chaning variables in mt.btn')
     # get model information.
     nlay = mt.nlay
     nrow = mt.nrow
