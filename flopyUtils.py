@@ -573,12 +573,12 @@ def UcnFile(mt): # {{{
 # }}}
 
 # Grid and index functions.
-def flopyGetXY(mf,center=1,debug=False): # {{{
+def flopyGetXY(mf,center=1,debug=False,isoffset=1): # {{{
     '''
     Explain
      Get x,y grid points from modflow model.
-     :math:`x \in R^n`
-     :math:`y \in R^m`
+     :math:$x \in R^n$
+     :math:$y \in R^m$
 
     Usage
     x,y = flopyGetXY(mf)
@@ -587,23 +587,41 @@ def flopyGetXY(mf,center=1,debug=False): # {{{
     x,y   = flopyGetXY(mf)
     x,y,z = flopyGetXY(mf)
 
+    Options
+    isoffset    - consider xul and yul value in modflow.
+                    ul = uppler left
     '''
     # define function name.
     f_name = inspect.currentframe().f_code.co_name
 
     if not isinstance(mf,flopy.modflow.mf.Modflow):
         raise Exception('Error: input file is not type(flopy.modflow.Modflow.mf')
-    nlay = mf.dis.nlay
-    ncol = mf.dis.ncol
-    nrow = mf.dis.nrow
+    nlay = mf.dis.nlay # number of z dir
+    nrow = mf.dis.nrow # number of y dir
+    ncol = mf.dis.ncol # number of x dir
 
     # [nlay, nrow, ncol]
-    dx = mf.dis.delr.array
-    dy = mf.dis.delc.array
+    dx = mf.dis.delr.array # x direction
+    dy = mf.dis.delc.array # y direction
     x = numpy.zeros(dx.shape[0]+1)
     y = numpy.zeros(dy.shape[0]+1)
-    x[1:] = dx.cumsum() # cumulative sum for calculating x based on dx.
-    y[1:] = dy.cumsum() # cumulative sum for calculating y based on dy.
+    #x[1:] = dx.cumsum() # cumulative sum for calculating x based on dx.
+    #y[1:] = dy.cumsum() # cumulative sum for calculating y based on dy.
+    x[1:] = np.add.accumulate(dx)
+    y[1:] = np.add.accumulate(dy)
+
+    # get model domain.
+    Lx = 0
+    Ly = np.sum(dy)
+
+    # calculate centered coorinates, because modflow use block centered method.
+    if center:
+        x = (x[0:-1]+x[1:])/2
+        y = (y[0:-1]+y[1:])/2
+
+    # update x y value with Lx, and Ly of model domain.
+    x = Lx + x
+    y = Ly - y
 
     # get coorner coordinates
     print_('   %s: get global coordinate'%(f_name),debug=debug)
@@ -613,8 +631,8 @@ def flopyGetXY(mf,center=1,debug=False): # {{{
         yul = mf.dis._sr.yul # upper left corder grid
     elif flopy.__version__ >= "3.3.4":
         print_('   {}: flopy version = {}'.format(f_name,flopy.__version__),debug=debug)
-        xul = mf.modelgrid.xoffset# upper left corner grid
-        yul = mf.modelgrid.yoffset+np.sum(dy)# upper left corder grid
+        xul = mf.modelgrid.xoffset # upper left corner grid
+        yul = mf.modelgrid.yoffset # upper left corder grid
     else:
         print_('   current version(flopy {}) is not available'.format(flopy.__version__),
                 debug=1)
@@ -622,21 +640,16 @@ def flopyGetXY(mf,center=1,debug=False): # {{{
     print_('   {}: xul = {}'.format(f_name,xul),debug=debug)
     print_('   {}: yul = {}'.format(f_name,yul),debug=debug)
 
-
-    # calculate centered coorinates, because modflow use block centered method.
-    if center:
-        x = (x[0:-1]+x[1:])/2
-        y = (y[0:-1]+y[1:])/2
-
     # calibarte global coordinate with xul, yul.
     print_('   {}: len x = {}'.format(f_name,np.shape(x)),debug=debug)
     print_('   {}: len y = {}'.format(f_name,np.shape(y)),debug=debug)
-    if xul:
-        print_('   xul = %f'%(xul),debug=debug)
-        x = x + xul
-    if yul:
-        print_('   yul = %f'%(yul),debug=debug)
-        y = -y + yul
+    if isoffset:
+        if xul:
+            print_('   xul = %f'%(xul),debug=debug)
+            x = x + xul
+        if yul:
+            print_('   yul = %f'%(yul),debug=debug)
+            y = y + yul
 
     # get z elevation from botm and top elevation.
     z    = np.zeros((nlay,nrow,ncol),dtype=float)
