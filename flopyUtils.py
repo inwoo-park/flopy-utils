@@ -927,6 +927,7 @@ def flopyXyToIndex(mf,x,y,debug=False):# {{{
     Usage
      cols, rows = flopyXyToIndex(mf,welx,wely)
     '''
+    raise Exception('flopyXyToIndex is not used anymore. This function has an problem.')
     cols, rows, lays = flopyXyzToIndex(mf,x,y,[],debug=debug)
 
     # outputs
@@ -942,6 +943,7 @@ def flopyXyzToIndex(mf,x,y,z,debug=False):# {{{
     Usage
      cols, rows, lays = flopyXyToIndex(mf,wx,wy,wz)
     '''
+    raise Exception('flopyXyzToIndex is not used anymore. This function has an problem.')
 
     # check input types
     if isinstance(x,float) or isinstance(x,int) or isinstance(x,numpy.int64) or isinstance(x,numpy.float64):
@@ -1006,6 +1008,31 @@ def flopyXyzToIndex(mf,x,y,z,debug=False):# {{{
     # outputs
     return varargout(cols, rows, lays)
 # }}}
+def xy2index(mf,x,y,debug=debug) # {{{
+    '''
+    Explain
+     Get specific row and column from x,y coordinates. This function is alternative to flopyXyToIndex.
+
+    Usage
+     row, col = xy2index(mf,welx,wely)
+    '''
+
+    # get model grid
+    xg,yg = mf.modelgrid.xycenters
+
+    # consider model coordinate system from EPSG.
+    xg = xg + mf.modelgrid.xoffset
+    yg = xg + mf.modelgrid.yoffset
+
+    print_('   obs xy -> obs row, col data',debug=debug)
+    row = []  # y direction
+    col = []  # x direction
+    for x_, y_ in zip(x,y):
+        col.append(np.argmin(abs(xg-x_)))
+        row.append(np.argmin(abs(yg-y_)))
+
+    return row, col
+    # }}}
 
 # export and import netcdf data
 def flopysave(mf,filename=[],headobj=[],concobj=[]): # {{{
