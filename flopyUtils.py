@@ -1008,7 +1008,7 @@ def flopyXyzToIndex(mf,x,y,z,debug=False):# {{{
     # outputs
     return varargout(cols, rows, lays)
 # }}}
-def xy2index(mf,x,y,debug=debug) # {{{
+def xy2index(mf,x,y,debug=debug): # {{{
     '''
     Explain
      Get specific row and column from x,y coordinates. This function is alternative to flopyXyToIndex.
