@@ -1022,7 +1022,7 @@ def xy2index(mf,x,y,debug=0): # {{{
 
     # consider model coordinate system from EPSG.
     xg = xg + mf.modelgrid.xoffset
-    yg = xg + mf.modelgrid.yoffset
+    yg = yg + mf.modelgrid.yoffset
 
     print_('   obs xy -> obs row, col data',debug=debug)
     row = []  # y direction
