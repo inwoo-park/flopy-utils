@@ -7,6 +7,7 @@ Explain
 # for system command
 import glob, os, sys, shutil, importlib
 import platform
+from find_bc import *
 
 import flopy
 import pandas
@@ -455,7 +456,8 @@ def updateInitialHead(mf): # {{{
     head  = hobj.get_data(totim=times[-1])
 
     # update head data
-    updateBas(mf,strt=head)
+    #updateBas(mf,strt=head)
+    mf.bas6.strt = head
 # }}}
 
 # mt3d specials.
@@ -536,7 +538,7 @@ def updateEPSG(mf,epsg_src,epsg_tgt,debug=0): # {{{
             print('current pyproj {} is not supported'.format(pyproj.__version__))
 
     # update xul, yul
-    if flopy.__version__ == '3.3.4':
+    if flopy.__version__ >= '3.3.4':
         print_('   {}: update EPSG = {},{}'.format(f_name,xul,yul),debug=debug)
         xlen, ylen = flopyGetXylength(mf)
         mf.modelgrid._xoff = xul
@@ -1015,6 +1017,31 @@ def xy2index(mf,x,y,debug=0): # {{{
 
     Usage
      row, col = xy2index(mf,welx,wely)
+    '''
+
+    # get model grid
+    xg,yg = mf.modelgrid.xycenters
+
+    # consider model coordinate system from EPSG.
+    xg = xg + mf.modelgrid.xoffset
+    yg = yg + mf.modelgrid.yoffset
+
+    print_('   obs xy -> obs row, col data',debug=debug)
+    row = []  # y direction
+    col = []  # x direction
+    for x_, y_ in zip(x,y):
+        col.append(np.argmin(abs(xg-x_)))
+        row.append(np.argmin(abs(yg-y_)))
+
+    return row, col
+    # }}}
+def xyz2index(mf,x,y,z,debug=0): # {{{
+    '''
+    Explain
+     Get specific row and column from x,y,z coordinates. This function is alternative to flopyXyzToIndex.
+
+    Usage
+     lay, row, col = xyz2index(mf,welx,wely,welz)
     '''
 
     # get model grid
