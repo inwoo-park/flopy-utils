@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-import pandas
+import pandas, flopy
 import matplotlib.pyplot as plt
 
 def find_bc(mf,layer=0,debug=0):# {{{
@@ -28,4 +28,25 @@ def find_bc(mf,layer=0,debug=0):# {{{
             if ibound[i,j] > 0:
                 if (ibound[i+1,j]==0) or (ibound[i,j+1]==0) or (ibound[i-1,j]==0) or (ibound[i,j-1]==0):
                     ibc[i,j]=1
+
+    # check boundary at x = xmin,xmax, y = ymin,ymax.
+    # for ymax
+    pos = np.where(ibound[0,:] > 0)
+    if pos:
+         ibc[0,pos] = 1
+    # for ymin
+    pos = np.where(ibound[nrow-1,:] > 0)
+    if pos:
+        ibc[nrow-1,pos] = 1
+    # for xmin
+    pos = np.where(ibound[:,0] > 0)
+    if pos:
+        ibc[pos,0] = 1
+    # for ymax
+    pos = np.where(ibound[:,ncol-1] > 0)
+    if pos:
+        ibc[pos,ncol-1] = 1
+
     return ibc
+
+
