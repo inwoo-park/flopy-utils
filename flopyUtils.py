@@ -5,7 +5,7 @@ Explain
 
 '''
 # for system command
-import glob, os, sys, shutil, importlib
+import glob, os, sys, shutil, importlib, warnings
 import platform
 from find_bc import *
 
@@ -88,7 +88,7 @@ def print_(string,debug=False):# {{{
         debug  : show or not.\n
     '''
     if debug:
-        mfPrint(string,debug=1)
+        print(string)
 # }}}
 def mf96Print(string,debug=False): # {{{
     '''
@@ -263,9 +263,10 @@ def updateDis(mf,nper=[],perlen=[],nstp=[],steady=[],
      change specific variables of DIS package.
 
     Usage
-     dis = updateDis(mf,nper=nper,perlen)
+     mf = updateDis(mf,nper=nper,perlen)
     '''
-    raise Exception('ERROR: updateDIS does not work anymore. Just update modflow flow parameteri with chaning variables in mf.dis')
+    #raise Exception('ERROR: updateDIS does not work anymore. Just update modflow flow parameteri with chaning variables in mf.dis')
+    warnings.warn('updateDIS will be deprecated. Just update modflow flow parameteri with chaning variables in mf.dis')
     print_('update DIS package.',debug=debug)
     f_name = inspect.currentframe().f_code.co_name
 
@@ -336,7 +337,7 @@ def updateDis(mf,nper=[],perlen=[],nstp=[],steady=[],
         mf._xul = xul
         mf._yul = yul
 
-    return mf.dis
+    return mf
     # }}}
 def updateBas(mf,ibound=[], strt=[]):# {{{
     raise Exception('ERROR: updateBas does not work anymore. Just update modflow flow parameteri with chaning variables in mf.bas6')
@@ -467,9 +468,9 @@ def updateBtn(mt,sconc=[],prsity=[],thkmin=[],munit=[],icbund=[],nprs=[],debug=0
      update Btn of mt3d without additional inputs. Input variables are same as "flopy.mt3d.Mt3dBtn".
 
     Usage
-     updateBtn(mt)
+     mt = updateBtn(mt)
     '''
-    raise Exception('ERROR: updateBtn does not work anymore. Just update modflow flow parameteri with chaning variables in mt.btn')
+    warnings.warn('updateBtn will be deprecated. Just update modflow flow parameteri with chaning variables in mt.btn')
     # get model information.
     nlay = mt.nlay
     nrow = mt.nrow
@@ -502,6 +503,7 @@ def updateBtn(mt,sconc=[],prsity=[],thkmin=[],munit=[],icbund=[],nprs=[],debug=0
     # update Btn package.
     btn = flopy.mt3d.Mt3dBtn(mt,sconc=sconc,prsity=prsity,thkmin=thkmin,
             munit=munit,icbund=icbund,nprs=nprs)
+    return mt
     # }}}
 def updateEPSG(mf,epsg_src,epsg_tgt,debug=0): # {{{
     '''
@@ -1052,13 +1054,24 @@ def xyz2index(mf,x,y,z,debug=0): # {{{
     yg = yg + mf.modelgrid.yoffset
 
     print_('   obs xy -> obs row, col data',debug=debug)
+    lay = np.zeros(np.shape(z))# z direction
     row = []  # y direction
     col = []  # x direction
     for x_, y_ in zip(x,y):
         col.append(np.argmin(abs(xg-x_)))
         row.append(np.argmin(abs(yg-y_)))
+    row = np.array(row)
+    col = np.array(col)
 
-    return row, col
+    for i, z_, r_, c_  in zip(range(len(z)),z,row,col):
+        for layer in range(mf.nlay):
+            check = (mf.modelgrid.top_botm[layer,r_,c_]
+                    >= z_
+                    >= mf.modelgrid.top_botm[layer+1,r_,c_])
+            if check:
+                lay[i] = layer
+
+    return lay, row, col
     # }}}
 
 # export and import netcdf data
